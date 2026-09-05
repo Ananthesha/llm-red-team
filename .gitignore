@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.env
+
+# Run outputs (keep the committed sample report and the calibration set)
+results.jsonl
+hardened.jsonl
+report.html
+cases.jsonl
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
