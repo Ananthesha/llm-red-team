@@ -66,15 +66,20 @@ flowchart LR
 ## The pluggable target
 
 Every target implements one method — `send(prompt) -> str` (`redteam/adapters/base.py`).
-Three adapters ship:
+Four adapters ship:
 
 - `SampleTarget` — a stand-in "InterviewCoach" app (a thin LLM wrapper with its own
   system prompt) so the toolkit runs end-to-end out of the box. A `hardened=True`
   variant adds guardrails, used for the regression demo.
 - `FunctionAdapter` — wrap any local Python callable.
 - `HTTPAdapter` — POST to a REST endpoint, extract the reply via a dotted JSON path.
-  **This is the seam for testing a real deployed app** (e.g. an existing chat product):
-  new adapter instance, zero core changes.
+  **The generic seam for testing a real deployed app**: new adapter instance, zero
+  core changes.
+- `InterviewIQTarget` — the real case-study target: [InterviewIQ](https://github.com/Ananthesha),
+  our other project. Its chat flow is stateful (auth → start session → looped
+  "answer" calls, not a single stateless POST), so it gets a dedicated adapter
+  rather than a generic `HTTPAdapter` config. Demonstrates the toolkit against a
+  real, shipped product instead of only its own demo target.
 
 ## Quickstart
 
@@ -93,11 +98,23 @@ python -m redteam.cli report results.jsonl --out report.html --target-name Inter
 
 # 4. Re-run against the hardened target and see the safe rate improve
 python -m redteam.cli regress results.jsonl --out hardened.jsonl
+
+# 5. Or point it at InterviewIQ's local dev server instead of the sample target
+#    (uses a dedicated test account, created automatically on first run)
+export INTERVIEWIQ_BASE_URL=http://localhost:5000   # optional, this is the default
+python -m redteam.cli run --target interview-iq --variants 3 --out iq_results.jsonl
+python -m redteam.cli report iq_results.jsonl --out iq_report.html --target-name InterviewIQ
 ```
 
 Offline (no API key): `pytest` runs the full test suite, and
 `reports/sample_report.html` is a committed **illustrative** report so you can see the
 output format.
+
+**On InterviewIQ:** every `run`/`regress` call against `interview-iq` sends real
+requests to a running InterviewIQ server and triggers a real Groq/Gemini API call on
+*that* project's keys per turn. Point it at a local dev instance, not the deployed
+one, and loop in your collaborator before running it in CI or on a schedule — it
+shares infrastructure (Atlas DB, API quota) with the main product.
 
 ## Results
 
@@ -156,9 +173,11 @@ serious evaluation:
 - [ ] Run `redteam regress` against the hardened system prompt and publish the
       before/after safe-rate delta for prompt injection and system-prompt extraction.
 - [ ] Add **multi-turn** attack sequences.
-- [ ] Point the `HTTPAdapter` at a **real deployed app** as a case study, and report
-      before/after hardening.
-- [ ] Add a second, different target to prove the adapter is genuinely generic.
+- [x] `InterviewIQTarget` adapter built and unit-tested against verified endpoint
+      shapes (`redteam/adapters/interview_iq.py`). Not yet run live — needs an
+      InterviewIQ dev server up.
+- [ ] **Run it**: a live suite against InterviewIQ's local dev server, harden its
+      system prompt based on the findings, `regress` for the before/after delta.
 - [ ] CI (run tests on push); per-run cost/latency tracking.
 
 ## Ethics & scope
