@@ -10,9 +10,12 @@ and produces a self-contained HTML vulnerability report — including a headline
 > Defensive tool. It is meant for testing an application you own or are authorised to
 > test. See [Ethics & scope](#ethics--scope).
 
-Runs entirely on [Groq](https://console.groq.com)'s free API tier (`openai/gpt-oss-120b`
-by default) — no paid model access required. The generator/judge calls are
-rate-limit-aware (retry with backoff) since the free tier caps requests per minute.
+Runs entirely on free API tiers — [Groq](https://console.groq.com) (`openai/gpt-oss-120b`)
+by default, with [Gemini](https://aistudio.google.com/app/apikey) (`gemini-2.5-flash`)
+as a second provider — no paid model access required. Two providers exist because
+Groq's free tier has a hard **daily** token cap (200K TPD) that a single evaluation
+run can hit partway through; `REDTEAM_PROVIDER=gemini` switches every call over
+without touching code. Calls also retry with backoff on per-minute rate limits.
 
 ---
 
@@ -86,6 +89,8 @@ Four adapters ship:
 ```bash
 pip install -e ".[dev]"
 export GROQ_API_KEY=gsk_...      # required for the live commands - free at console.groq.com
+# export GEMINI_API_KEY=AIza...  # optional 2nd provider - free at aistudio.google.com/app/apikey
+# export REDTEAM_PROVIDER=gemini # switch every call to Gemini (e.g. Groq's daily cap is hit)
 
 # 1. Generate + run the suite against the built-in sample target
 python -m redteam.cli run --target sample --variants 3 --out results.jsonl

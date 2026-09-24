@@ -14,6 +14,8 @@ results.jsonl
 hardened.jsonl
 report.html
 cases.jsonl
+iq_*.jsonl
+iq_*report*.html
 
 # Editor / OS
 .DS_Store

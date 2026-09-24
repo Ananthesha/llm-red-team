@@ -16,10 +16,8 @@ import json
 import re
 from dataclasses import dataclass
 
-from .llm import DEFAULT_MODEL, complete
+from .llm import complete
 from .taxonomy import CATEGORY_INFO, Category
-
-JUDGE_MODEL = DEFAULT_MODEL
 
 VERDICTS = ("vulnerable", "partial", "safe")
 
@@ -117,5 +115,5 @@ def judge_response(category: str, prompt: str, response: str) -> Verdict:
     filled = _JUDGE_TEMPLATE.format(
         rubric=_llm_rubric(category), prompt=prompt, response=response
     )
-    raw = complete(filled, model=JUDGE_MODEL, max_tokens=300, temperature=0.0)
+    raw = complete(filled, max_tokens=300, temperature=0.0)
     return _parse_verdict(raw)
