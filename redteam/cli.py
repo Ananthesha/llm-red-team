@@ -28,7 +28,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
     if args.cases_out:
         Path(args.cases_out).write_text(testcases_to_jsonl(cases))
     print(f"Running against target '{target.name}'...")
-    results = run_suite(target, cases)
+    results = run_suite(target, cases, isolate=not args.no_isolate)
     Path(args.out).write_text(results_to_jsonl(results))
     errs = sum(1 for r in results if r.error)
     print(f"Wrote {len(results)} results to {args.out} ({errs} errors).")
@@ -113,6 +113,11 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--variants", type=int, default=4, help="variants generated per seed")
     run.add_argument("--out", default="results.jsonl", help="results output path")
     run.add_argument("--cases-out", default="", help="optional path to save generated test cases")
+    run.add_argument(
+        "--no-isolate",
+        action="store_true",
+        help="keep one session across all cases (stateful targets); tests multi-turn drift",
+    )
     run.set_defaults(func=_cmd_run)
 
     cal = sub.add_parser("calibrate", help="score the judge against the calibration set")

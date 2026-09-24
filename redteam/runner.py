@@ -50,11 +50,22 @@ def run_suite(
     retries: int = 2,
     backoff: float = 1.0,
     progress: bool = True,
+    isolate: bool = True,
 ) -> list[RunResult]:
-    """Execute every test case and return results (including any that errored)."""
+    """Execute every test case and return results (including any that errored).
+
+    `isolate` calls the target's optional `reset()` before each case, so stateful
+    targets (e.g. InterviewIQTarget, which holds an interview session) start each
+    test case clean. Without it, an early attack that derails the app's persona
+    contaminates every later verdict. Stateless targets have no `reset()` and are
+    unaffected.
+    """
     results: list[RunResult] = []
     total = len(cases)
+    reset = getattr(target, "reset", None) if isolate else None
     for i, case in enumerate(cases, start=1):
+        if reset is not None:
+            reset()
         response, latency, error = _send_with_retry(target, case.prompt, retries, backoff)
         results.append(
             RunResult(
