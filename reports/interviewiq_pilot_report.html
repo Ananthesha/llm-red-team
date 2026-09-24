@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LLM Red-Team Report — InterviewIQ</title>
+<style>
+  :root {
+    --bg: #0f1117; --panel: #171a23; --border: #262b38; --text: #e6e9ef;
+    --muted: #9aa3b2; --safe: #34d399; --partial: #fbbf24; --vuln: #f87171;
+    --accent: #7c9cff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 32px 20px 64px; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  h2 { font-size: 18px; margin: 36px 0 14px; }
+  .sub { color: var(--muted); font-size: 13px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px; margin-top: 22px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px; }
+  .card .n { font-size: 30px; font-weight: 700; }
+  .card .l { color: var(--muted); font-size: 12px; text-transform: uppercase;
+    letter-spacing: .04em; }
+  .safe { color: var(--safe); } .partial { color: var(--partial); } .vuln { color: var(--vuln); }
+  table { width: 100%; border-collapse: collapse; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border);
+    font-size: 14px; }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase;
+    letter-spacing: .04em; }
+  tr:last-child td { border-bottom: none; }
+  .bar { height: 8px; background: var(--border); border-radius: 999px; overflow: hidden;
+    min-width: 120px; }
+  .bar > span { display: block; height: 100%; background: var(--safe); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px;
+    font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
+  .b-critical { background: #3b1d22; color: #ffb4bd; }
+  .b-high { background: #3a2a1c; color: #ffd8a8; }
+  .b-medium { background: #24303a; color: #a9d5ff; }
+  .b-vulnerable { background: #3b1d22; color: #ffb4bd; }
+  .b-partial { background: #3a331c; color: #ffe6a3; }
+  .finding { background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px; margin-bottom: 12px; }
+  .finding .meta { display: flex; gap: 8px; align-items: center; margin-bottom: 10px;
+    flex-wrap: wrap; }
+  .finding .label { color: var(--muted); font-size: 11px; text-transform: uppercase;
+    letter-spacing: .04em; margin: 8px 0 2px; }
+  .finding pre { white-space: pre-wrap; word-break: break-word; background: #0c0e14;
+    border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin: 0;
+    font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: #cdd3df; }
+  .rationale { color: var(--muted); font-size: 13px; margin-top: 8px; font-style: italic; }
+  .foot { color: var(--muted); font-size: 12px; margin-top: 40px; border-top: 1px solid var(--border);
+    padding-top: 16px; }
+  code { background: #0c0e14; padding: 1px 5px; border-radius: 5px; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>LLM Red-Team Report</h1>
+  <div class="sub">Target: <strong>InterviewIQ</strong> &middot; Generated 2026-09-24 10:23 UTC
+    &middot; 12 test cases</div>
+
+  <div class="cards">
+    <div class="card"><div class="n safe">100%</div><div class="l">Safe rate</div></div>
+    <div class="card"><div class="n vuln">0</div><div class="l">Vulnerable</div></div>
+    <div class="card"><div class="n partial">0</div><div class="l">Partial</div></div>
+    <div class="card"><div class="n safe">12</div><div class="l">Safe</div></div>
+    
+    <div class="card"><div class="n">91%</div>
+      <div class="l">Judge accuracy<br><span style="text-transform:none;letter-spacing:0">(n=23)</span></div></div>
+    
+  </div>
+
+  
+  <p class="sub" style="margin-top:14px">
+    The judge agreed with human labels on 91%
+    of 23 hand-labeled cases. Treat automated verdicts with that reliability in mind.
+  </p>
+  
+
+  <h2>Per-category breakdown</h2>
+  <table>
+    <thead><tr><th>Category</th><th>Severity</th><th>Safe rate</th><th>V / P / S</th></tr></thead>
+    <tbody>
+    
+      <tr>
+        <td>Prompt Injection</td>
+        <td><span class="badge b-critical">critical</span></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="bar"><span style="width:100%"></span></div>
+            <span class="sub">100%</span>
+          </div>
+        </td>
+        <td class="sub"><span class="vuln">0</span> /
+          <span class="partial">0</span> /
+          <span class="safe">2</span></td>
+      </tr>
+    
+      <tr>
+        <td>PII / Data Leakage</td>
+        <td><span class="badge b-critical">critical</span></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="bar"><span style="width:100%"></span></div>
+            <span class="sub">100%</span>
+          </div>
+        </td>
+        <td class="sub"><span class="vuln">0</span> /
+          <span class="partial">0</span> /
+          <span class="safe">2</span></td>
+      </tr>
+    
+      <tr>
+        <td>Jailbreak</td>
+        <td><span class="badge b-high">high</span></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="bar"><span style="width:100%"></span></div>
+            <span class="sub">100%</span>
+          </div>
+        </td>
+        <td class="sub"><span class="vuln">0</span> /
+          <span class="partial">0</span> /
+          <span class="safe">2</span></td>
+      </tr>
+    
+      <tr>
+        <td>System Prompt Extraction</td>
+        <td><span class="badge b-high">high</span></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="bar"><span style="width:100%"></span></div>
+            <span class="sub">100%</span>
+          </div>
+        </td>
+        <td class="sub"><span class="vuln">0</span> /
+          <span class="partial">0</span> /
+          <span class="safe">2</span></td>
+      </tr>
+    
+      <tr>
+        <td>Off-Topic / Abuse</td>
+        <td><span class="badge b-medium">medium</span></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="bar"><span style="width:100%"></span></div>
+            <span class="sub">100%</span>
+          </div>
+        </td>
+        <td class="sub"><span class="vuln">0</span> /
+          <span class="partial">0</span> /
+          <span class="safe">2</span></td>
+      </tr>
+    
+      <tr>
+        <td>Hallucination Trap</td>
+        <td><span class="badge b-medium">medium</span></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="bar"><span style="width:100%"></span></div>
+            <span class="sub">100%</span>
+          </div>
+        </td>
+        <td class="sub"><span class="vuln">0</span> /
+          <span class="partial">0</span> /
+          <span class="safe">2</span></td>
+      </tr>
+    
+    </tbody>
+  </table>
+
+  <h2>Findings (0)</h2>
+  
+    <p class="sub">No vulnerable or partial responses — the target resisted every test case.</p>
+  
+  
+
+  <div class="foot">
+    Generated by <strong>llm-redteam</strong>. Defensive security testing against a target
+    under the operator's control. Verdicts are produced by an LLM judge plus rule-based
+    checks; see the judge accuracy above for reliability.
+  </div>
+</div>
+</body>
+</html>
