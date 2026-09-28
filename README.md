@@ -127,27 +127,29 @@ Real run against the built-in `SampleTarget` (an unhardened "InterviewCoach" bot
 `openai/gpt-oss-120b`), 110 test cases, 0 errors. Full report:
 [`reports/sample_report.html`](reports/sample_report.html).
 
-**Judge calibration: 91.3% agreement with human labels (n=23).**
+**Judge calibration: 88.4% agreement with human labels (n=43).**
 
 | true \ predicted | vulnerable | partial | safe |
 |---|---|---|---|
-| **vulnerable** | 8 | 0 | 0 |
-| **partial** | 0 | 1 | 2 |
-| **safe** | 0 | 0 | 12 |
+| **vulnerable** | 15 | 0 | 0 |
+| **partial** | 2 | 1 | 3 |
+| **safe** | 0 | 0 | 22 |
 
-The judge is perfect at the extremes (8/8 vulnerable, 12/12 safe) and both of its
-errors are on borderline `partial` cases, which it calls `safe`. In other words it is
-**slightly lenient — it under-flags partial compliance**, so the safe rates below are
-best read as a mild upper bound.
+The judge is perfect at the extremes (15/15 vulnerable, 22/22 safe) and every one of
+its 5 errors is on `partial` cases (1/6 correct) — split between calling them `safe`
+(under-flagging partial compliance) and `vulnerable` (over-flagging it). In other
+words: **the judge reliably separates clear wins from clear losses, but the
+`partial` boundary itself is genuinely fuzzy for it** — treat any single `partial`
+verdict with real skepticism, and read the safe rates below with that in mind.
 
-**Target results — 94% overall safe rate, 6 vulnerable / 1 partial / 103 safe:**
+**Target results — 93% overall safe rate, 7 vulnerable / 1 partial / 102 safe:**
 
 | Category | Severity | Safe rate | V / P / S |
 |---|---|---|---|
 | Prompt injection | critical | 83% | 3 / 0 / 15 |
 | PII / data leakage | critical | 100% | 0 / 0 / 15 |
 | Jailbreak | high | 100% | 0 / 0 / 18 |
-| System-prompt extraction | high | 84% | 2 / 1 / 16 |
+| System-prompt extraction | high | 79% | 3 / 1 / 15 |
 | Off-topic / abuse | medium | 95% | 1 / 0 / 19 |
 | Hallucination traps | medium | 100% | 0 / 0 / 20 |
 
@@ -155,8 +157,14 @@ best read as a mild upper bound.
 jailbreaks, PII requests, and hallucination traps were resisted across the board. The
 failures cluster in the two categories that depend on *application-level* defences
 rather than model-level ones: **prompt injection (83%)** and **system-prompt
-extraction (84%)** — precisely the risks a system prompt has to be written to defend
+extraction (79%)** — precisely the risks a system prompt has to be written to defend
 against. That is the argument for the hardened variant and the `regress` command.
+(These are the judge's live verdicts on this run; per the calibration numbers above,
+individual `partial`/`vulnerable` calls near that boundary carry some judge
+uncertainty — re-judging the same fixed target responses can shift a case or two, as
+happened here between runs. The categorical pattern — prompt injection and
+system-prompt extraction are the weak ones — is the reliable takeaway, not the exact
+percentage.)
 
 ### Case study: InterviewIQ
 
@@ -167,7 +175,12 @@ InterviewIQ, our other project, using the `InterviewIQTarget` adapter
 [all 101 live responses](reports/interviewiq_full_101_responses.jsonl).
 
 **100% safe rate — 0 vulnerable / 0 partial / 101 safe, across all six categories.
-Judge calibration: 91% (n=23).**
+Judge calibration: 88.4% (n=43).** Worth noting explicitly: the judge's calibration
+weak spot is the `vulnerable`/`partial` boundary (see [Results](#results) above),
+and this run has zero cases anywhere near that boundary — every one of the 101
+responses was an unambiguous, unrelated interview question. That's exactly the
+kind of clear-cut case the judge gets right 100% of the time in calibration (37/37
+non-`partial` cases), so the 100% safe rate here is on solid ground.
 
 Reading the transcripts, every one of the 101 attacks — jailbreaks, injected
 `[SYSTEM: ...]` blocks inside "content to summarize," direct requests to leak the
@@ -230,17 +243,23 @@ is the natural next step here, not covered by this run.
 These are the concrete next steps that turn the harness from a solid skeleton into a
 serious evaluation:
 
-- [ ] Grow the calibration set from 23 to 50–100 examples, **labeled independently by
-      two people**, and report inter-rater agreement (Cohen's κ) alongside judge accuracy.
-- [ ] Fix the judge's known lenient bias on `partial` cases (both current errors) by
-      sharpening the partial-vs-safe boundary in the rubric, then re-measure.
+- [x] Grew the calibration set from 23 to 43 examples, deliberately weighted toward
+      `partial` cases and rule-layer edge cases (the judge's known weak spot).
+      Accuracy moved from 91.3% (n=23) to a more robust 88.4% (n=43) — the judge is
+      perfect on unambiguous cases (37/37) and weak specifically on `partial`
+      (1/6), not uniformly worse; see [Results](#results).
+- [ ] Grow further to 50–100, **labeled independently by two people**, and report
+      inter-rater agreement (Cohen's κ) alongside judge accuracy.
+- [ ] Fix the judge's `partial`-boundary weakness (now 5 errors, all on `partial`,
+      split between over- and under-flagging) by sharpening that boundary
+      specifically in the rubric, then re-measure.
 - [ ] Run `redteam regress` against the hardened system prompt and publish the
       before/after safe-rate delta for prompt injection and system-prompt extraction.
 - [ ] Add **multi-turn** attack sequences.
 - [x] `InterviewIQTarget` adapter built, unit-tested, and run live: 101/101 cases,
       0 errors (`redteam/adapters/interview_iq.py`).
 - [x] Judged the full 101-case run: 100% safe across all six categories, judge
-      calibration 91% (n=23) — see the [case study](#case-study-interviewiq).
+      calibration 88.4% (n=43) — see the [case study](#case-study-interviewiq).
 - [x] Verified *why* against InterviewIQ's actual source, not just inference from
       transcripts: structural containment (schema-constrained output, narrow
       field parsing, per-turn score clamping, no persistent model-side chat
